@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js" defer></script>
+</head>
+<body>
+    <header>
+    </header>
+    <div id="departure-container" class="container mt-4 mb-4">
+        <div style="display: flex; align-items: end; justify-content: space-between;">
+            <div id="title" class="display-5">Departures: Wetlistrasse</div>
+            <div id="clock" class="display-6" style="margin-left: auto;"></div>
+        </div>
+        <table class="table fs-2">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Destination</th>
+                    <th>Time</th>
+                    <th>Min</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+<footer>
+    <script>
+        function updateClock() {
+            const now = new Date();
+            const clock = document.getElementById('clock');
+            clock.textContent = now.toLocaleTimeString('de-CH', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+        
+        // Update clock immediately and then every second
+        updateClock();
+        setInterval(updateClock, 1000);
+        
+        const evtSource = new EventSource('/sse');
+        
+        evtSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            const tbody = document.querySelector('#departure-container tbody');
+            tbody.innerHTML = '';
+            
+            data.stationboard.forEach(entry => {
+                let prognosis, departure, delay;
+                departure = new Date(entry.stop.departure);
+                
+                let timeCell = departure.toLocaleTimeString('de-CH', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                let now = new Date();
+                let minCell;
+                
+                if (entry.stop.prognosis.departure) {
+                    prognosis = new Date(entry.stop.prognosis.departure);
+                    delay = Math.floor((prognosis - departure) / 60000);
+                    minCell = Math.max(0, Math.floor((prognosis - now) / 60000));
+                    timeCell = `${timeCell} <strong>+${delay} min</strong>`;
+                }
+                
+                const row = `
+            <tr>
+                <td>${entry.number}</td>
+                <td>${entry.to}</td>
+                <td>${timeCell}</td>
+                <td>${minCell}</td>
+            </tr>
+        `;
+                
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+        };
+        
+        evtSource.onerror = function(err) {
+            console.error('EventSource failed:', err);
+            evtSource.close();
+        };
+    </script>
+</footer>
+</body>
+</html>
