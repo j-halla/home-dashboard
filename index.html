@@ -20,7 +20,6 @@
                 <tr>
                     <th>#</th>
                     <th>Destination</th>
-                    <th>Time</th>
                     <th>Min</th>
                 </tr>
             </thead>
@@ -51,34 +50,23 @@
             const data = JSON.parse(event.data);
             const tbody = document.querySelector('#departure-container tbody');
             tbody.innerHTML = '';
+            let now = new Date();
+            console.log(now);
+            
             
             data.stationboard.forEach(entry => {
-                let prognosis, departure, delay;
-                departure = new Date(entry.stop.departure);
-                
-                let timeCell = departure.toLocaleTimeString('de-CH', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-                
-                let now = new Date();
-                let minCell;
-                
-                if (entry.stop.prognosis.departure) {
-                    prognosis = new Date(entry.stop.prognosis.departure);
-                    delay = Math.floor((prognosis - departure) / 60000);
-                    minCell = Math.max(0, Math.floor((prognosis - now) / 60000));
-                    timeCell = `${timeCell} <strong>+${delay} min</strong>`;
-                }
+                let departure = new Date(entry.stop.departure);
+                let prognosis = new Date(entry.stop.prognosis.departure);
+                let minCell = Math.max(0, Math.floor((departure - now) / 60000));
+                let delay = Math.floor((prognosis - departure) / 60000);
+                minCell = delay > 0 ? `${minCell} <b>+${delay}</b>` : `${minCell}`;
                 
                 const row = `
-            <tr>
-                <td>${entry.number}</td>
-                <td>${entry.to}</td>
-                <td>${timeCell}</td>
-                <td>${minCell}</td>
-            </tr>
-        `;
+                    <tr>
+                        <td>${entry.number}</td>
+                        <td>${entry.to}</td>
+                        <td>${minCell}</td>
+                    </tr>`;
                 
                 tbody.insertAdjacentHTML('beforeend', row);
             });
