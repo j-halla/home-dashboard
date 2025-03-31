@@ -50,9 +50,7 @@
             const data = JSON.parse(event.data);
             const tbody = document.querySelector('#departure-container tbody');
             tbody.innerHTML = '';
-            let now = new Date();
-            console.log(now);
-            
+            let now = new Date();            
             
             data.stationboard.forEach(entry => {
                 let departure = new Date(entry.stop.departure);
