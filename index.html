@@ -55,7 +55,7 @@
             data.stationboard.forEach(entry => {
                 let departure = new Date(entry.stop.departure);
                 let prognosis = new Date(entry.stop.prognosis.departure);
-                let minCell = Math.max(0, Math.floor((departure - now) / 60000));
+                let minCell = Math.max(0, Math.floor((prognosis - now) / 60000));
                 let delay = Math.floor((prognosis - departure) / 60000);
                 minCell = delay > 0 ? `${minCell} <b>+${delay}</b>` : `${minCell}`;
                 
