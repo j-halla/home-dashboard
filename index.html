@@ -57,7 +57,7 @@
                 let prognosis = new Date(entry.stop.prognosis.departure);
                 let minCell = Math.max(0, Math.floor((prognosis - now) / 60000));
                 let delay = Math.floor((prognosis - departure) / 60000);
-                minCell = delay > 0 ? `${minCell} <b>+${delay}</b>` : `${minCell}`;
+                minCell = delay > 0 ? `${minCell} (+${delay})` : `${minCell}`;
                 
                 const row = `
                     <tr>
