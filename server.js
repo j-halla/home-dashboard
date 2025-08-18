@@ -18,6 +18,25 @@ const bridgeAddressFallback = '192.168.1.117';
 const bridgeDiscoveryApi = 'http://discovery.meethue.com/';
 const bridgeAddressKey = 'internalipaddress';
 
+// Recycling
+const zip = 8032;
+const types = ['cardboard', 'paper'];
+const mrGreenType = 'Monthly';
+const limit = 6;
+let recyclingData = { "cardboard": [], "paper": [] , "mrgreen": [] };
+const germanMonths = {
+    'Januar': '01', 'Februar': '02', 'März': '03', 'April': '04',
+    'Mai': '05', 'Juni': '06', 'Juli': '07', 'August': '08',
+    'September': '09', 'Oktober': '10', 'November': '11', 'Dezember': '12'
+};
+
+const convertGermanDate = (dateStr) => {
+    const [day, month, year] = dateStr.split(' ');
+    const paddedDay = day.replace('.', '').padStart(2, '0');
+    const monthNum = germanMonths[month];
+    return `${year}-${monthNum}-${paddedDay}`;
+};
+
 // Function to update bridge address
 const updateBridgeAddress = async () => {
     try {
@@ -66,8 +85,59 @@ const updateDepartureData = async () => {
         }
         departureData = await response.json();
         console.log('Departure data updated successfully');
+        console.log(departureData)
     } catch (error) {
         console.error("Error updating departure data:", error.message);
+    }
+};
+
+// Function to update recycling data
+const updateRecyclingData = async () => {
+    
+    let today = new Date();
+    let start = today.toISOString().split('T')[0]; // Format YYYY-MM-DD
+    let openerzApi = `https://openerz.metaodi.ch/api/calendar.json?zip=${zip}&types=${types.join('&types=')}&start=${start}&sort=date&offset=0&limit=${limit}`;
+    let mrGreenApi = `https://api.mr-green.ch/api/get-pickup-dates-new-main`;
+    let mrGreenBody = { "zip": zip, "type": mrGreenType };
+    
+    try {
+        const response = await fetch(openerzApi);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        let erzData = await response.json();
+        
+        recyclingData = { "cardboard": [], "paper": [], "mrgreen": [] };
+        
+        // Iterate through results and store dates in appropriate arrays
+        erzData.result.forEach(item => {
+            if (recyclingData.hasOwnProperty(item.waste_type)) {
+                recyclingData[item.waste_type].push(item.date);
+            }
+        });
+        
+        // Second API call for Mr. Green
+        const mrGreenResponse = await fetch(mrGreenApi, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(mrGreenBody)
+        });
+        
+        if (!mrGreenResponse.ok) {
+            throw new Error(`HTTP error! status: ${mrGreenResponse.status}`);
+        }
+        
+        let mrGreenData = await mrGreenResponse.json();
+        
+        recyclingData['mrgreen'] = mrGreenData.dates_data[0].date
+        .slice(0, 3)
+        .map(date => convertGermanDate(date));
+
+        console.log('Recycling data updated successfully');
+    } catch (error) {
+        console.error("Error updating recycling data:", error.message);
     }
 };
 
@@ -76,13 +146,14 @@ const updateDepartureData = async () => {
     await updateBridgeAddress();
     await updateGroups();
     await updateDepartureData();
+    await updateRecyclingData();
 })();
 
 // Set up update intervals
 setInterval(updateBridgeAddress, 86400000); // 24 hours
 setInterval(updateGroups, 30000); // 30 seconds
 setInterval(updateDepartureData, 30000); // 30 seconds
-
+setInterval(updateRecyclingData, 86400000); // 24 hours
 
 // This middleware parses JSON bodies
 app.use(express.json());
@@ -158,6 +229,30 @@ app.get('/sse/departure', (req, res) => {
     const interval = setInterval(() => {
         res.write(`data: ${JSON.stringify(departureData)}\n\n`);
     }, 30000);
+    
+    // Clean up on client disconnect
+    req.on('close', () => {
+        clearInterval(interval);
+    });
+});
+
+// SSE endpoint
+app.get('/sse/recycling', (req, res) => {
+    // Set SSE headers
+    res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*'
+    });
+    
+    // Send current recycling data immediately
+    res.write(`data: ${JSON.stringify(recyclingData)}\n\n`);
+    
+    // Set up interval to send cached recycling data
+    const interval = setInterval(() => {
+        res.write(`data: ${JSON.stringify(recyclingData)}\n\n`);
+    }, 86400000);
     
     // Clean up on client disconnect
     req.on('close', () => {

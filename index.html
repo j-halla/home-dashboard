@@ -8,7 +8,7 @@
     <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js" defer></script>
     <style>
         .light-card {
-            flex: 0 1 24%;
+            flex: 0 1 32%;
         }
         
         #departure-container > div {
@@ -34,6 +34,9 @@
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="lights-tab" data-bs-toggle="tab" data-bs-target="#lights-tab-pane" type="button" role="tab" aria-controls="lights-tab-pane" aria-selected="false">Lights</button>  
                 </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="recycling-tab" data-bs-toggle="tab" data-bs-target="#recycling-tab-pane" type="button" role="tab" aria-controls="recycling-tab-pane" aria-selected="false">Recycling</button>  
+                </li>
             </ul>
         </div>
     </header>
@@ -57,10 +60,36 @@
             <div id="lights-container" class="container mt-4 mb-4 fs-2">
             </div>
         </div>
+        <div class="tab-pane fade show" id="recycling-tab-pane" role="tabpanel" aria-labelledby="recycling-tab" tabindex="0">
+            <div id="recycling-container" class="container mt-4 mb-4 fs-2">
+                <table class="table fs-2">
+                    <tbody>
+                        <tr>
+                            <td>Cardboard</td>
+                            <td id="cardboard-next-0">Loading...</td>
+                            <td id="cardboard-next-1">Loading...</td>
+                            <td id="cardboard-next-2">Loading...</td>
+                        </tr>
+                        <tr>
+                            <td>Paper</td>
+                            <td id="paper-next-0">Loading...</td>
+                            <td id="paper-next-1">Loading...</td>
+                            <td id="paper-next-2">Loading...</td>
+                        </tr>
+                        <tr>
+                            <td>Mr. Green</td>
+                            <td id="mrgreen-next-0">Loading...</td>
+                            <td id="mrgreen-next-1">Loading...</td>
+                            <td id="mrgreen-next-2">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
     <footer>
         <script>
-
+            
             // EventSource for departure data
             const evtSourceDeparture = new EventSource('/sse/departure');
             
@@ -79,7 +108,7 @@
                     
                     const row = `
                     <tr>
-                        <td>${entry.number}</td>
+                        <td>${entry.number || entry.category}</td>
                         <td>${entry.to}</td>
                         <td>${minCell}</td>
                     </tr>`;
@@ -130,6 +159,31 @@
             evtSourceLightGroups.onerror = function(err) {
                 console.error('EventSource failed:', err);
                 evtSourceLightGroups.close();
+            };
+            
+            // EventSource for departure data
+            const evtSourceRecycling = new EventSource('/sse/recycling');
+            
+            evtSourceRecycling.onmessage = function(event) {
+                
+                // Helper function to convert date format
+                const convertDateFormat = (dateStr) => {
+                    const [year, month, day] = dateStr.split('-');
+                    return `${day}.${month}.${year}`;
+                };
+                
+                const data = JSON.parse(event.data);
+                
+                Object.keys(data).forEach(type => {
+                    data[type].forEach((date, index) => {
+                        document.querySelector(`#${type}-next-${index}`).innerHTML = convertDateFormat(date);
+                    });
+                });
+            };
+            
+            evtSourceRecycling.onerror = function(err) {
+                console.error('EventSource failed:', err);
+                evtSourceRecycling.close();
             };
         </script>
     </footer>
