@@ -1,12 +1,33 @@
-FROM node:14
+# ===== Development Stage =====
+FROM node:14 AS dev
 
 WORKDIR /app
 
-COPY server.js .
-COPY package.json .
+COPY package*.json ./
 
 RUN npm install
 
+# Install nodemon for hot reload
+RUN npm install --save-dev nodemon
+
+COPY . .
+
 EXPOSE 3000
 
+# Nodemon for development
+CMD ["npx", "nodemon", "server.js"]
+
+
+# ===== Production Stage =====
+FROM node:14 AS prod
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install --only=production
+
+COPY . .
+
+EXPOSE 3000
+
+# Start normally in production
 CMD ["node", "server.js"]

@@ -6,75 +6,132 @@
     <title>Dashboard</title>
     <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
     <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js" defer></script>
+    <style>
+        .light-card {
+            flex: 0 1 24%;
+        }
+        
+        #departure-container > div {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+        }
+        
+        #lights-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+    </style>
 </head>
 <body>
     <header>
-    </header>
-    <div id="departure-container" class="container mt-4 mb-4">
-        <div style="display: flex; align-items: end; justify-content: space-between;">
-            <div id="title" class="display-5">Departures: Wetlistrasse</div>
-            <div id="clock" class="display-6" style="margin-left: auto;"></div>
+        <div class="fixed-top bg-light">
+            <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="departure-tab" data-bs-toggle="tab" data-bs-target="#departure-tab-pane" type="button" role="tab" aria-controls="departure-tab-pane" aria-selected="true">Departures</button>  
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="lights-tab" data-bs-toggle="tab" data-bs-target="#lights-tab-pane" type="button" role="tab" aria-controls="lights-tab-pane" aria-selected="false">Lights</button>  
+                </li>
+            </ul>
         </div>
-        <table class="table fs-2">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Destination</th>
-                    <th>Min</th>
-                </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
+    </header>
+    <div class="tab-content mt-5" id="myTabContent">
+        <div class="tab-pane fade show active" id="departure-tab-pane" role="tabpanel" aria-labelledby="departure-tab" tabindex="0">
+            <div id="departure-container" class="container mt-4 mb-4">
+                <table class="table fs-2">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Destination</th>
+                            <th>Min</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="tab-pane fade show" id="lights-tab-pane" role="tabpanel" aria-labelledby="lights-tab" tabindex="0">
+            <div id="lights-container" class="container mt-4 mb-4 fs-2">
+            </div>
+        </div>
     </div>
-</div>
-<footer>
-    <script>
-        function updateClock() {
-            const now = new Date();
-            const clock = document.getElementById('clock');
-            clock.textContent = now.toLocaleTimeString('de-CH', {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
-        }
-        
-        // Update clock immediately and then every second
-        updateClock();
-        setInterval(updateClock, 1000);
-        
-        const evtSource = new EventSource('/sse');
-        
-        evtSource.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-            const tbody = document.querySelector('#departure-container tbody');
-            tbody.innerHTML = '';
-            let now = new Date();            
+    <footer>
+        <script>
+
+            // EventSource for departure data
+            const evtSourceDeparture = new EventSource('/sse/departure');
             
-            data.stationboard.forEach(entry => {
-                let departure = new Date(entry.stop.departure);
-                let prognosis = new Date(entry.stop.prognosis.departure);
-                let minCell = Math.max(0, Math.floor((prognosis - now) / 60000));
-                let delay = Math.floor((prognosis - departure) / 60000);
-                minCell = delay > 0 ? `${minCell} (+${delay})` : `${minCell}`;
+            evtSourceDeparture.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                const tbody = document.querySelector('#departure-container tbody');
+                tbody.innerHTML = '';
+                let now = new Date();            
                 
-                const row = `
+                data.stationboard.forEach(entry => {
+                    let departure = new Date(entry.stop.departure);
+                    let prognosis = (entry.stop.prognosis.departure) ? new Date(entry.stop.prognosis.departure) : departure;
+                    let minCell = Math.max(0, Math.floor((prognosis - now) / 60000));
+                    let delay = Math.floor((prognosis - departure) / 60000);
+                    minCell = delay > 0 ? `${minCell} (+${delay})` : `${minCell}`;
+                    
+                    const row = `
                     <tr>
                         <td>${entry.number}</td>
                         <td>${entry.to}</td>
                         <td>${minCell}</td>
                     </tr>`;
+                    
+                    tbody.insertAdjacentHTML('beforeend', row);
+                });
+            };
+            
+            evtSourceDeparture.onerror = function(err) {
+                console.error('EventSource failed:', err);
+                evtSourceDeparture.close();
+            };
+            
+            // EventSource for light groups
+            const evtSourceLightGroups = new EventSource('/sse/light');
+            
+            evtSourceLightGroups.onmessage = function(event) {
+                const groups = JSON.parse(event.data);
                 
-                tbody.insertAdjacentHTML('beforeend', row);
-            });
-        };
-        
-        evtSource.onerror = function(err) {
-            console.error('EventSource failed:', err);
-            evtSource.close();
-        };
-    </script>
-</footer>
+                const container = document.getElementById('lights-container');
+                container.innerHTML = '';
+                
+                Object.keys(groups).forEach(groupId => {
+                    container.insertAdjacentHTML('beforeend', `
+                        <div class="card light-card">
+                            <div class="card-body">
+                                <p class="card-title text-center">${groups[groupId].name}</p>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="switch-${groupId}" data-group-id="${groupId}" ${(groups[groupId].action.on) ? 'checked' : ''}>
+                                    <label class="form-check-label" for="switch-${groupId}"></label>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                });
+                
+                document.querySelectorAll('.form-check-input').forEach(input => {
+                    input.addEventListener('change', async (e) => {
+                        await fetch('/api/trigger-light', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ on: e.target.checked, id: e.target.dataset.groupId })
+                        });
+                    });
+                });
+            };
+            
+            evtSourceLightGroups.onerror = function(err) {
+                console.error('EventSource failed:', err);
+                evtSourceLightGroups.close();
+            };
+        </script>
+    </footer>
 </body>
 </html>
