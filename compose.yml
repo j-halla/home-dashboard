@@ -20,6 +20,10 @@ services:
     ports:
       - "3000:3000"
     profiles: ["dev"]
+    networks:
+      default:
+        aliases:
+          - nodejs
     
   app-prod:
     build:
@@ -28,6 +32,10 @@ services:
     ports:
       - "3000:3000"
     profiles: ["prod"]
+    networks:
+      default:
+        aliases:
+          - nodejs
 
   web-prod:
     image: nginx
