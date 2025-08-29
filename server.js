@@ -1,29 +1,38 @@
-const express = require('express');
-const path = require('path');
-const fetch = require('node-fetch');
+import express from "express";
+import fetch from "node-fetch";
+import dotenv from "dotenv";
+import QRCode from "qrcode";
+import path from "path";
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config();
 const app = express();
 const PORT = 3000;
 
 // Departure
 let departureData = {};
 const departureLimit = 7;
-const stationName = 'Wetlistrasse';
+const stationName = process.env.STATION_NAME;
 const stationboardApi = `https://transport.opendata.ch/v1/stationboard?station=${stationName}&limit=${departureLimit}`;
 
 // Lights
 let bridgeAddress = '';
 let groupsApi = '';
 let groups = {};
-const bridgeAddressFallback = '192.168.1.117';
+let bridgeAddressFallback = process.env.HUE_BRIDGE_ADDRESS;
+const user = process.env.HUE_USER;
 const bridgeDiscoveryApi = 'http://discovery.meethue.com/';
 const bridgeAddressKey = 'internalipaddress';
 
-// Recycling
-const zip = 8032;
+// Calendar
+const zip = process.env.ZIP;
 const types = ['cardboard', 'paper'];
 const mrGreenType = 'Monthly';
 const limit = 6;
-let recyclingData = { "cardboard": [], "paper": [] , "mrgreen": [] };
+let calendarData = { "cardboard": [], "paper": [] , "mrgreen": [] };
 const germanMonths = {
     'Januar': '01', 'Februar': '02', 'März': '03', 'April': '04',
     'Mai': '05', 'Juni': '06', 'Juli': '07', 'August': '08',
@@ -43,7 +52,7 @@ const updateBridgeAddress = async () => {
         const response = await fetch(bridgeDiscoveryApi);
         if (!response.ok) {
             bridgeAddress = bridgeAddressFallback;
-            groupsApi = `http://${bridgeAddress}/api/lI7sNFC7oAdlJ-b9OkZfEXB0If4u2pAVnlg7VUxW/groups/`;
+            groupsApi = `http://${bridgeAddress}/api/${user}/groups/`;
             console.log(`Bridge address fallback used: ${bridgeAddress}`);
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -52,7 +61,8 @@ const updateBridgeAddress = async () => {
         
         if (Array.isArray(data) && data.length > 0 && data[0][bridgeAddressKey]) {
             bridgeAddress = data[0][bridgeAddressKey];
-            groupsApi = `http://${bridgeAddress}/api/lI7sNFC7oAdlJ-b9OkZfEXB0If4u2pAVnlg7VUxW/groups/`;
+            bridgeAddressFallback = bridgeAddress;
+            groupsApi = `http://${bridgeAddress}/api/${user}/groups/`;
             console.log(`Bridge address found: ${bridgeAddress}`);
         } else {
             console.error("No bridge address found in discovery response:", data);
@@ -85,14 +95,13 @@ const updateDepartureData = async () => {
         }
         departureData = await response.json();
         console.log('Departure data updated successfully');
-        console.log(departureData)
     } catch (error) {
         console.error("Error updating departure data:", error.message);
     }
 };
 
-// Function to update recycling data
-const updateRecyclingData = async () => {
+// Function to update calendar data
+const updateCalendarData = async () => {
     
     let today = new Date();
     let start = today.toISOString().split('T')[0]; // Format YYYY-MM-DD
@@ -107,12 +116,12 @@ const updateRecyclingData = async () => {
         }
         let erzData = await response.json();
         
-        recyclingData = { "cardboard": [], "paper": [], "mrgreen": [] };
+        calendarData = { "cardboard": [], "paper": [], "mrgreen": [] };
         
         // Iterate through results and store dates in appropriate arrays
         erzData.result.forEach(item => {
-            if (recyclingData.hasOwnProperty(item.waste_type)) {
-                recyclingData[item.waste_type].push(item.date);
+            if (calendarData.hasOwnProperty(item.waste_type)) {
+                calendarData[item.waste_type].push(item.date);
             }
         });
         
@@ -131,13 +140,13 @@ const updateRecyclingData = async () => {
         
         let mrGreenData = await mrGreenResponse.json();
         
-        recyclingData['mrgreen'] = mrGreenData.dates_data[0].date
+        calendarData['mrgreen'] = mrGreenData.dates_data[0].date
         .slice(0, 3)
         .map(date => convertGermanDate(date));
-
-        console.log('Recycling data updated successfully');
+        
+        console.log('Calendar data updated successfully');
     } catch (error) {
-        console.error("Error updating recycling data:", error.message);
+        console.error("Error updating calendar data:", error.message);
     }
 };
 
@@ -146,14 +155,14 @@ const updateRecyclingData = async () => {
     await updateBridgeAddress();
     await updateGroups();
     await updateDepartureData();
-    await updateRecyclingData();
+    await updateCalendarData();
 })();
 
 // Set up update intervals
 setInterval(updateBridgeAddress, 86400000); // 24 hours
-setInterval(updateGroups, 30000); // 30 seconds
+setInterval(updateGroups, 1000); // 1 second
 setInterval(updateDepartureData, 30000); // 30 seconds
-setInterval(updateRecyclingData, 86400000); // 24 hours
+setInterval(updateCalendarData, 86400000); // 24 hours
 
 // This middleware parses JSON bodies
 app.use(express.json());
@@ -164,18 +173,29 @@ app.use((req, res, next) => {
     next();
 });
 
+let lastLightUpdate = Promise.resolve();
+
 // This endpoint triggers a light action
 app.post('/api/trigger-light', async (req, res) => {
     
     // Validate request body
     try {
-        const response = await fetch(`http://${bridgeAddress}/api/lI7sNFC7oAdlJ-b9OkZfEXB0If4u2pAVnlg7VUxW/groups/${req.body.id}/action/`, {
+        const response = await fetch(`http://${bridgeAddress}/api/${user}/groups/${req.body.id}/action/`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ on: req.body.on })
         });
         
         const data = await response.json();
+        
+        // Update lastLightUpdate promise
+        lastLightUpdate = new Promise(resolve => {
+            setTimeout(async () => {
+                await updateGroups();
+                resolve();
+            }, 200); // 200ms delay to allow bridge to update
+        });
+        
         res.json(data);
         
         // Handle errors
@@ -189,13 +209,12 @@ app.post('/api/trigger-light', async (req, res) => {
 app.use(express.static(path.join(__dirname, './')));
 
 // SSE endpoint
-app.get('/sse/light', (req, res) => {
+app.get('/sse/groups', (req, res) => {
     // Set SSE headers
     res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*'
     });
     
     // Send current groups data immediately
@@ -204,7 +223,31 @@ app.get('/sse/light', (req, res) => {
     // Set up interval to send cached groups data
     const interval = setInterval(() => {
         res.write(`data: ${JSON.stringify(groups)}\n\n`);
-    }, 30000);
+    }, 3600000);
+    
+    // Clean up on client disconnect
+    req.on('close', () => {
+        clearInterval(interval);
+    });
+});
+
+// SSE endpoint
+app.get('/sse/light', (req, res) => {
+    // Set SSE headers
+    res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+    });
+    
+    // Send current groups data immediately
+    res.write(`data: ${JSON.stringify(groups)}\n\n`);
+    
+    // Set up interval to send cached groups data
+    const interval = setInterval(async () => {
+        await lastLightUpdate; // Wait for any pending updates
+        res.write(`data: ${JSON.stringify(groups)}\n\n`);
+    }, 1000);
     
     // Clean up on client disconnect
     req.on('close', () => {
@@ -219,7 +262,6 @@ app.get('/sse/departure', (req, res) => {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*'
     });
     
     // Send current departure data immediately
@@ -228,7 +270,7 @@ app.get('/sse/departure', (req, res) => {
     // Set up interval to send cached departure data
     const interval = setInterval(() => {
         res.write(`data: ${JSON.stringify(departureData)}\n\n`);
-    }, 30000);
+    }, 10000);
     
     // Clean up on client disconnect
     req.on('close', () => {
@@ -237,27 +279,48 @@ app.get('/sse/departure', (req, res) => {
 });
 
 // SSE endpoint
-app.get('/sse/recycling', (req, res) => {
+app.get('/sse/calendar', (req, res) => {
     // Set SSE headers
     res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*'
     });
     
-    // Send current recycling data immediately
-    res.write(`data: ${JSON.stringify(recyclingData)}\n\n`);
+    // Send current calendar data immediately
+    res.write(`data: ${JSON.stringify(calendarData)}\n\n`);
     
-    // Set up interval to send cached recycling data
+    // Set up interval to send cached calendar data
     const interval = setInterval(() => {
-        res.write(`data: ${JSON.stringify(recyclingData)}\n\n`);
+        res.write(`data: ${JSON.stringify(calendarData)}\n\n`);
     }, 86400000);
     
     // Clean up on client disconnect
     req.on('close', () => {
         clearInterval(interval);
     });
+});
+
+// SSE endpoint
+app.get("/sse/wifi", async (req, res) => {
+    // Set SSE headers
+    res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+    });
+    const ssid = process.env.WIFI_SSID;
+    const pass = process.env.WIFI_PASSWORD;
+    
+    // Format Wi-Fi QR code string
+    const wifiString = `WIFI:T:WPA;S:${ssid};P:${pass};;`;
+    const qrCodeDataUrl = await QRCode.toDataURL(wifiString);
+    
+    // Push JSON payload to client
+    res.write(`data: ${JSON.stringify({ ssid, pass, qrCodeDataUrl })}\n\n`);
+    
+    // Close immediately (since this isn’t a live stream)
+    res.end();
 });
 
 // Start server
