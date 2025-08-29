@@ -207,7 +207,6 @@ app.post('/api/trigger-light', async (req, res) => {
 
 // Serve static files
 app.use(express.static(path.join(__dirname, './')));
-app.use(express.static('public'))
 
 // SSE endpoint
 app.get('/sse/groups', (req, res) => {
