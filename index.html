@@ -6,6 +6,7 @@
     <title>Dashboard</title>
     <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
     <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="js/homedashboard.js" defer></script>
     <style>
         .light-card {
             flex: 0 1 32%;
@@ -22,27 +23,51 @@
             flex-wrap: wrap;
             gap: 10px;
         }
+        
+        #wifi-qr-code {
+            margin-right: 1.5rem;
+        }
     </style>
 </head>
 <body>
-    <header>
-        <div class="fixed-top bg-light">
-            <ul class="nav nav-tabs" id="myTab" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="departure-tab" data-bs-toggle="tab" data-bs-target="#departure-tab-pane" type="button" role="tab" aria-controls="departure-tab-pane" aria-selected="true">Departures</button>  
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="lights-tab" data-bs-toggle="tab" data-bs-target="#lights-tab-pane" type="button" role="tab" aria-controls="lights-tab-pane" aria-selected="false">Lights</button>  
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="recycling-tab" data-bs-toggle="tab" data-bs-target="#recycling-tab-pane" type="button" role="tab" aria-controls="recycling-tab-pane" aria-selected="false">Recycling</button>  
-                </li>
-            </ul>
-        </div>
-    </header>
-    <div class="tab-content mt-5" id="myTabContent">
+    <!-- Navigation -->
+    <div class="sticky-top bg-light">
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+
+            <!-- Departures -->
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="departure-tab" data-bs-toggle="tab" data-bs-target="#departure-tab-pane" type="button" role="tab" aria-controls="departure-tab-pane" aria-selected="true">Departures</button>  
+            </li>
+
+            <!-- Lights -->
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="lights-tab" data-bs-toggle="tab" data-bs-target="#lights-tab-pane" type="button" role="tab" aria-controls="lights-tab-pane" aria-selected="false">Lights</button>  
+            </li>
+
+            <!-- Calendar -->
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="calendar-tab" data-bs-toggle="tab" data-bs-target="#calendar-tab-pane" type="button" role="tab" aria-controls="calendar-tab-pane" aria-selected="false">Calendar</button>  
+            </li>
+
+            <!-- Wifi -->
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="wifi-tab" data-bs-toggle="tab" data-bs-target="#wifi-tab-pane" type="button" role="tab" aria-controls="wifi-tab-pane" aria-selected="false">Wifi</button>  
+            </li>
+        </ul>
+    </div>
+
+    <!-- Content -->
+    <div class="tab-content mt-4" id="myTabContent">
+        
+        <!-- Departures -->
         <div class="tab-pane fade show active" id="departure-tab-pane" role="tabpanel" aria-labelledby="departure-tab" tabindex="0">
+
+            <!-- Container for departure data -->
             <div id="departure-container" class="container mt-4 mb-4">
+
+                <!-- Table for departures -->
                 <table class="table fs-2">
                     <thead>
                         <tr>
@@ -56,26 +81,42 @@
                 </table>
             </div>
         </div>
+        
+        <!-- Lights -->
         <div class="tab-pane fade show" id="lights-tab-pane" role="tabpanel" aria-labelledby="lights-tab" tabindex="0">
+
+            <!-- Container for light cards -->
             <div id="lights-container" class="container mt-4 mb-4 fs-2">
             </div>
         </div>
-        <div class="tab-pane fade show" id="recycling-tab-pane" role="tabpanel" aria-labelledby="recycling-tab" tabindex="0">
-            <div id="recycling-container" class="container mt-4 mb-4 fs-2">
+        
+        <!-- Calendar -->
+        <div class="tab-pane fade show" id="calendar-tab-pane" role="tabpanel" aria-labelledby="calendar-tab" tabindex="0">
+            
+            <!-- Container for calendar data -->
+            <div id="calendar-container" class="container mt-4 mb-4 fs-2">
+
+                <!-- Table for calendar data -->
                 <table class="table fs-2">
                     <tbody>
+
+                        <!-- Cardboard -->
                         <tr>
                             <td>Cardboard</td>
                             <td id="cardboard-next-0">Loading...</td>
                             <td id="cardboard-next-1">Loading...</td>
                             <td id="cardboard-next-2">Loading...</td>
                         </tr>
+
+                        <!-- Paper -->
                         <tr>
                             <td>Paper</td>
                             <td id="paper-next-0">Loading...</td>
                             <td id="paper-next-1">Loading...</td>
                             <td id="paper-next-2">Loading...</td>
                         </tr>
+
+                        <!-- Mr. Green -->
                         <tr>
                             <td>Mr. Green</td>
                             <td id="mrgreen-next-0">Loading...</td>
@@ -86,106 +127,17 @@
                 </table>
             </div>
         </div>
+        
+        <!-- Wifi -->
+        <div class="tab-pane fade show" id="wifi-tab-pane" role="tabpanel" aria-labelledby="wifi-tab" tabindex="0">
+
+            <!-- Container for wifi data -->
+            <div id="wifi-container" class="container mt-4 mb-4 fs-2">
+                <img id="wifi-qr-code" src="" alt="WiFi QR Code" class="float-start">
+                <p id="wifi-ssid" class="ml-2">__WIFI_SSID__</p>
+                <p id="wifi-password" class="ml-2">__WIFI_PASSWORD__</p>
+            </div>
+        </div>
     </div>
-    <footer>
-        <script>
-            
-            // EventSource for departure data
-            const evtSourceDeparture = new EventSource('/sse/departure');
-            
-            evtSourceDeparture.onmessage = function(event) {
-                const data = JSON.parse(event.data);
-                const tbody = document.querySelector('#departure-container tbody');
-                tbody.innerHTML = '';
-                let now = new Date();            
-                
-                data.stationboard.forEach(entry => {
-                    let departure = new Date(entry.stop.departure);
-                    let prognosis = (entry.stop.prognosis.departure) ? new Date(entry.stop.prognosis.departure) : departure;
-                    let minCell = Math.max(0, Math.floor((prognosis - now) / 60000));
-                    let delay = Math.floor((prognosis - departure) / 60000);
-                    minCell = delay > 0 ? `${minCell} (+${delay})` : `${minCell}`;
-                    
-                    const row = `
-                    <tr>
-                        <td>${entry.number || entry.category}</td>
-                        <td>${entry.to}</td>
-                        <td>${minCell}</td>
-                    </tr>`;
-                    
-                    tbody.insertAdjacentHTML('beforeend', row);
-                });
-            };
-            
-            evtSourceDeparture.onerror = function(err) {
-                console.error('EventSource failed:', err);
-                evtSourceDeparture.close();
-            };
-            
-            // EventSource for light groups
-            const evtSourceLightGroups = new EventSource('/sse/light');
-            
-            evtSourceLightGroups.onmessage = function(event) {
-                const groups = JSON.parse(event.data);
-                
-                const container = document.getElementById('lights-container');
-                container.innerHTML = '';
-                
-                Object.keys(groups).forEach(groupId => {
-                    container.insertAdjacentHTML('beforeend', `
-                        <div class="card light-card">
-                            <div class="card-body">
-                                <p class="card-title text-center">${groups[groupId].name}</p>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" role="switch" id="switch-${groupId}" data-group-id="${groupId}" ${(groups[groupId].action.on) ? 'checked' : ''}>
-                                    <label class="form-check-label" for="switch-${groupId}"></label>
-                                </div>
-                            </div>
-                        </div>
-                    `);
-                });
-                
-                document.querySelectorAll('.form-check-input').forEach(input => {
-                    input.addEventListener('change', async (e) => {
-                        await fetch('/api/trigger-light', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ on: e.target.checked, id: e.target.dataset.groupId })
-                        });
-                    });
-                });
-            };
-            
-            evtSourceLightGroups.onerror = function(err) {
-                console.error('EventSource failed:', err);
-                evtSourceLightGroups.close();
-            };
-            
-            // EventSource for departure data
-            const evtSourceRecycling = new EventSource('/sse/recycling');
-            
-            evtSourceRecycling.onmessage = function(event) {
-                
-                // Helper function to convert date format
-                const convertDateFormat = (dateStr) => {
-                    const [year, month, day] = dateStr.split('-');
-                    return `${day}.${month}.${year}`;
-                };
-                
-                const data = JSON.parse(event.data);
-                
-                Object.keys(data).forEach(type => {
-                    data[type].forEach((date, index) => {
-                        document.querySelector(`#${type}-next-${index}`).innerHTML = convertDateFormat(date);
-                    });
-                });
-            };
-            
-            evtSourceRecycling.onerror = function(err) {
-                console.error('EventSource failed:', err);
-                evtSourceRecycling.close();
-            };
-        </script>
-    </footer>
 </body>
 </html>
