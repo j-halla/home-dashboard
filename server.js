@@ -14,7 +14,7 @@ const PORT = 3000;
 
 // Departure
 let departureData = {};
-const departureLimit = 7;
+const departureLimit = 6;
 const stationName = process.env.STATION_NAME;
 const stationboardApi = `https://transport.opendata.ch/v1/stationboard?station=${stationName}&limit=${departureLimit}`;
 
