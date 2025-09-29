@@ -110,43 +110,43 @@ const updateCalendarData = async () => {
     let mrGreenBody = { "zip": zip, "type": mrGreenType };
     
     try {
-        const response = await fetch(openerzApi);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        let erzData = await response.json();
-        
-        calendarData = { "cardboard": [], "paper": [], "mrgreen": [] };
-        
-        // Iterate through results and store dates in appropriate arrays
-        erzData.result.forEach(item => {
-            if (calendarData.hasOwnProperty(item.waste_type)) {
-                calendarData[item.waste_type].push(item.date);
-            }
-        });
-        
-        // Second API call for Mr. Green
-        const mrGreenResponse = await fetch(mrGreenApi, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(mrGreenBody)
-        });
-        
-        if (!mrGreenResponse.ok) {
-            throw new Error(`HTTP error! status: ${mrGreenResponse.status}`);
-        }
-        
-        let mrGreenData = await mrGreenResponse.json();
-        
-        calendarData['mrgreen'] = mrGreenData.dates_data[0].date
-        .slice(0, 3)
-        .map(date => convertGermanDate(date));
-        
-        console.log('Calendar data updated successfully');
+	const response = await fetch(openerzApi);
+	if (!response.ok) {
+	    throw new Error(`HTTP error! status: ${response.status}`);
+	}
+	let erzData = await response.json();
+	
+	calendarData = { "cardboard": [], "paper": [], "mrgreen": [] };
+	
+	// Iterate through results and store dates in appropriate arrays
+	erzData.result.forEach(item => {
+	    if (calendarData.hasOwnProperty(item.waste_type)) {
+		calendarData[item.waste_type].push(item.date);
+	    }
+	});
+	
+	// Second API call for Mr. Green
+	const mrGreenResponse = await fetch(mrGreenApi, {
+	    method: 'POST',
+	    headers: {
+		'Content-Type': 'application/json'
+	    },
+	    body: JSON.stringify(mrGreenBody)
+	});
+	
+	if (!mrGreenResponse.ok) {
+	    throw new Error(`HTTP error! status: ${mrGreenResponse.status}`);
+	}
+	
+	let mrGreenData = await mrGreenResponse.json();
+	
+	calendarData['mrgreen'] = mrGreenData.dates_data[0].date
+	.slice(0, 3)
+	.map(date => convertGermanDate(date));
+	
+	console.log('Calendar data updated successfully');
     } catch (error) {
-        console.error("Error updating calendar data:", error.message);
+	console.error("Error updating calendar data:", error.message);
     }
 };
 
@@ -256,7 +256,7 @@ app.get('/sse/light', (req, res) => {
 });
 
 // SSE endpoint
-app.get('/sse/departure', (req, res) => {
+app.get('/sse/stationboard', (req, res) => {
     // Set SSE headers
     res.writeHead(200, {
         'Content-Type': 'text/event-stream',
