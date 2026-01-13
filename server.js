@@ -31,7 +31,8 @@ const bridgeAddressKey = 'internalipaddress';
 const zip = process.env.ZIP;
 const types = ['cardboard', 'paper'];
 const mrGreenType = 'Monthly';
-const limit = 6;
+const limitResponse = 10;
+const limitEntries = 3;
 let calendarData = { "cardboard": [], "paper": [] , "mrgreen": [] };
 const germanMonths = {
 	'Januar': '01', 'Februar': '02', 'März': '03', 'April': '04',
@@ -105,7 +106,7 @@ const updateCalendarData = async () => {
 
 	let today = new Date();
 	let start = today.toISOString().split('T')[0]; // Format YYYY-MM-DD
-	let openerzApi = `https://openerz.metaodi.ch/api/calendar.json?zip=${zip}&types=${types.join('&types=')}&start=${start}&sort=date&offset=0&limit=${limit}`;
+	let openerzApi = `https://openerz.metaodi.ch/api/calendar.json?zip=${zip}&types=${types.join('&types=')}&start=${start}&sort=date&offset=0&limit=${limitResponse}`;
 	let mrGreenApi = `https://api.mr-green.ch/api/get-pickup-dates-new-main`;
 	let mrGreenBody = { "zip": zip, "type": mrGreenType };
 
@@ -114,13 +115,14 @@ const updateCalendarData = async () => {
 		if (!response.ok) {
 			throw new Error(`HTTP error! status: ${response.status}`);
 		}
+
 		let erzData = await response.json();
 
 		calendarData = { "cardboard": [], "paper": [], "mrgreen": [] };
 
 		// Iterate through results and store dates in appropriate arrays
 		erzData.result.forEach(item => {
-			if (calendarData.hasOwnProperty(item.waste_type)) {
+			if (calendarData.hasOwnProperty(item.waste_type) && calendarData[item.waste_type].length < limitEntries) {
 				calendarData[item.waste_type].push(item.date);
 			}
 		});
