@@ -164,7 +164,7 @@ const updateCalendarData = async () => {
 setInterval(updateBridgeAddress, 86400000); // 24 hours
 setInterval(updateGroups, 1000); // 1 second
 setInterval(updateDepartureData, 30000); // 30 seconds
-setInterval(updateCalendarData, 86400000); // 24 hours
+setInterval(updateCalendarData, 3600000); // 1 hour
 
 // This middleware parses JSON bodies
 app.use(express.json());
@@ -295,7 +295,7 @@ app.get('/sse/calendar', (req, res) => {
 	// Set up interval to send cached calendar data
 	const interval = setInterval(() => {
 		res.write(`data: ${JSON.stringify(calendarData)}\n\n`);
-	}, 86400000);
+	}, 3600000);
 
 	// Clean up on client disconnect
 	req.on('close', () => {
