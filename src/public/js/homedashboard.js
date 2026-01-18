@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		const data = JSON.parse(event.data);
 		const tbody = document.querySelector('#stationboard-container tbody');
 		tbody.innerHTML = '';
-		let now = new Date();            
+		let now = new Date();
 
 		data.stationboard.forEach(entry => {
 			let stationboard = new Date(entry.stop.departure);
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		// Helper function to convert date format
 		const convertDateFormat = (dateStr) => {
 			const [year, month, day] = dateStr.split('-');
-			return `${day}.${month}.${year}`;
+			return `${day}.${month}.`;
 		};
 
 		const data = JSON.parse(event.data);

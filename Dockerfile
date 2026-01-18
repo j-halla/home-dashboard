@@ -15,7 +15,7 @@ COPY . .
 EXPOSE 3000
 
 # Nodemon for development
-CMD ["npx", "nodemon", "server.js"]
+CMD ["npx", "nodemon", "src/app.js"]
 
 
 # ===== Production Stage =====
@@ -30,4 +30,4 @@ COPY . .
 EXPOSE 3000
 
 # Start normally in production
-CMD ["node", "server.js"]
+CMD ["node", "src/app.js"]
