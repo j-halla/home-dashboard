@@ -2,10 +2,11 @@
   "name": "home-dashboard",
   "version": "1.0.0",
   "description": "Home dashboard for displaying weather, train departures and other information",
-  "main": "server.js",
+  "main": "src/app.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
   },
   "author": "Jan Haller",
   "license": "MIT",
