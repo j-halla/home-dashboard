@@ -57,7 +57,7 @@ class CalendarService {
 
       const mrGreenData = await mrGreenResponse.json();
 
-      this.data.mrgreen = mrGreenData.dates_data[0].date
+      this.data.mrgreen = mrGreenData.data[0].date
         .slice(0, 3)
         .map((date) => this.convertGermanDate(date));
 

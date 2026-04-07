@@ -30,11 +30,11 @@ export const config = {
   calendar: {
     zip: process.env.ZIP,
     types: ['cardboard', 'paper'],
-    mrGreenType: 'Monthly',
+    mrGreenType: 'monthly',
     limitResponse: 10,
     limitEntries: 3,
     openerzApiUrl: 'https://openerz.metaodi.ch/api/calendar.json',
-    mrGreenApiUrl: 'https://api.mr-green.ch/api/get-pickup-dates-new-main',
+    mrGreenApiUrl: 'https://api-service.mr-green.ch/api/system/pickup-dates',
     updateInterval: 3600000, // 1 hour
     sseInterval: 3600000,    // 1 hour
   },
