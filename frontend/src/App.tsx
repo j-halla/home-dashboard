@@ -22,8 +22,8 @@ export default function App() {
   })
 
   return (
-    <div className="container-fluid py-3">
-      <ul className="nav nav-tabs" id="mainTabs" role="tablist">
+    <div className="container-fluid py-2">
+      <ul className="nav nav-tabs mb-0" id="mainTabs" role="tablist" style={{ fontSize: '0.85em' }}>
         <li className="nav-item" role="presentation">
           <button className="nav-link active" data-bs-toggle="tab" data-bs-target="#stationboard" type="button" role="tab">
             Stationboard
