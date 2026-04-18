@@ -48,11 +48,11 @@ export default function LightsTab({ groups, lightState }: Props) {
   if (!localGroups) return <p className="text-muted">Loading...</p>
 
   return (
-    <div className="row row-cols-3 g-3" id="lights-container">
+    <div className="row row-cols-3 g-2" id="lights-container">
       {Object.entries(localGroups).map(([id, group]) => (
         <div className="col" key={id}>
           <div className="card h-100">
-            <div className="card-body">
+            <div className="card-body py-2">
               <p className="card-title text-center mb-2">{group.name}</p>
               <div className="form-check form-switch d-flex justify-content-center">
                 <input
