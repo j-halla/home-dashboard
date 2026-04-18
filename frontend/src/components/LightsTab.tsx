@@ -33,6 +33,10 @@ export default function LightsTab({ groups, lightState }: Props) {
 
   const handleToggle = async (groupId: string, on: boolean) => {
     pendingRef.current.add(groupId)
+    setLocalGroups(prev => {
+      if (!prev) return prev
+      return { ...prev, [groupId]: { ...prev[groupId], action: { on } } }
+    })
     await fetch('/api/trigger-light', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -44,20 +48,22 @@ export default function LightsTab({ groups, lightState }: Props) {
   if (!localGroups) return <p className="text-muted">Loading...</p>
 
   return (
-    <div className="d-flex flex-wrap gap-3" id="lights-container">
+    <div className="row row-cols-3 g-3" id="lights-container">
       {Object.entries(localGroups).map(([id, group]) => (
-        <div className="card" key={id} style={{ minWidth: '140px' }}>
-          <div className="card-body">
-            <p className="card-title text-center mb-2">{group.name}</p>
-            <div className="form-check form-switch d-flex justify-content-center">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                role="switch"
-                id={`switch-${id}`}
-                checked={group.action.on}
-                onChange={e => handleToggle(id, e.target.checked)}
-              />
+        <div className="col" key={id}>
+          <div className="card h-100">
+            <div className="card-body">
+              <p className="card-title text-center mb-2">{group.name}</p>
+              <div className="form-check form-switch d-flex justify-content-center">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  role="switch"
+                  id={`switch-${id}`}
+                  checked={group.action.on}
+                  onChange={e => handleToggle(id, e.target.checked)}
+                />
+              </div>
             </div>
           </div>
         </div>
