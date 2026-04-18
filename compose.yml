@@ -1,48 +1,54 @@
 services:
 
-  web:
+  nginx:
     image: nginx
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
     ports:
-      - "8080:8080"
+      - "8080:80"
     depends_on:
-      - app
+      - backend
+      - frontend
     profiles: ["dev"]
 
-  app:
+  nginx-prod:
     build:
       context: .
+      dockerfile: Dockerfile.nginx
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend-prod
+    profiles: ["prod"]
+
+  backend:
+    build:
+      context: ./backend
+    env_file: .env
+    profiles: ["dev"]
+    networks:
+      default:
+        aliases:
+          - backend
+
+  backend-prod:
+    build:
+      context: ./backend
+    env_file: .env
+    profiles: ["prod"]
+    networks:
+      default:
+        aliases:
+          - backend
+
+  frontend:
+    build:
+      context: ./frontend
       target: dev
     volumes:
-      - .:/app
-      - /app/node_modules
-    ports:
-      - "3000:3000"
+      - ./frontend/src:/app/src
     profiles: ["dev"]
     networks:
       default:
         aliases:
-          - nodejs
-    
-  app-prod:
-    build:
-      context: .
-      target: prod
-    ports:
-      - "3000:3000"
-    profiles: ["prod"]
-    networks:
-      default:
-        aliases:
-          - nodejs
-
-  web-prod:
-    image: nginx
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-    ports:
-      - "8080:8080"
-    depends_on:
-      - app-prod
-    profiles: ["prod"]
+          - frontend
