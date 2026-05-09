@@ -1,11 +1,12 @@
 # Home Dashboard
 
-A home dashboard built with Spring Boot and React that displays real-time information including train departures, Philips Hue light controls, waste collection calendar, and a WiFi QR code.
+A home dashboard built with Spring Boot and React that displays real-time information including train departures, Philips Hue light controls, waste collection calendar, weather forecast, and a WiFi QR code.
 
 ## Features
 
 - **Stationboard** — live Swiss train departures via [transport.opendata.ch](https://transport.opendata.ch)
-- **Philips Hue** — light group status and toggle controls via the Hue Bridge API
+- **Philips Hue** — light group status, toggle controls, and brightness slider via the Hue Bridge API v2
+- **Weather** — current conditions plus hourly and daily forecast via [Open-Meteo](https://open-meteo.com)
 - **Waste collection calendar** — upcoming pickup dates via [openerz.metaodi.ch](https://openerz.metaodi.ch) and [mr-green.ch](https://mr-green.ch)
 - **WiFi QR code** — scan-to-connect QR code for guests
 
@@ -24,7 +25,7 @@ backend/                        # Spring Boot (Java 21, WebFlux, Maven)
 frontend/                       # React 18 + Vite + TypeScript + Bootstrap
   src/
     hooks/useSse.ts             # EventSource hook for named SSE events
-    components/                 # StationboardTab, LightsTab, CalendarTab, WifiTab
+    components/                 # StationboardTab, LightsTab, WeatherTab, CalendarTab, WifiTab
     types/                      # Shared TypeScript interfaces
 ```
 
@@ -34,9 +35,11 @@ Create a `.env` file in the project root:
 
 ```env
 STATION_NAME=                  # Swiss transport station name (e.g. "Zurich HB")
-HUE_USER=                      # Philips Hue API username
+HUE_API_KEY=                   # Philips Hue API key
 HUE_BRIDGE_ADDRESS=            # Fallback IP for the Hue Bridge (used if discovery fails)
 ZIP=                           # Swiss postal code for waste collection calendar
+WEATHER_LATITUDE=              # Latitude for weather forecast (e.g. 47.37)
+WEATHER_LONGITUDE=             # Longitude for weather forecast (e.g. 8.54)
 WIFI_SSID=                     # WiFi network name for QR code
 WIFI_PASSWORD=                 # WiFi password for QR code
 ```
@@ -47,7 +50,7 @@ WIFI_PASSWORD=                 # WiFi password for QR code
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/api/trigger-light` | Toggle a light group. Body: `{ "id": "<group-id>", "on": true\|false }` |
+| `POST` | `/api/trigger-light` | Toggle or dim a light group. Body: `{ "id": "<group-id>", "on": true\|false, "brightness": 0–100 }` |
 
 ### SSE
 
@@ -58,6 +61,7 @@ Single endpoint `GET /sse` with named events:
 | `stationboard` | 10 seconds | Next train departures |
 | `groups` | 1 hour | Hue light groups (rebuilds UI) |
 | `light` | 1 second | Real-time Hue light state |
+| `weather` | 15 minutes | Current conditions, hourly and daily forecast |
 | `calendar` | 1 hour | Upcoming waste collection dates |
 | `wifi` | One-shot | WiFi QR code data |
 
