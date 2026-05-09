@@ -1,7 +1,11 @@
 html {
-  font-size: 1.65rem;
+  font-size: 1.75rem;
 }
 
 .nav-tabs .nav-link {
   padding: 0.2rem 0.75rem;
+}
+
+.table > :not(caption) > * > * {
+  padding: 0.2rem 0.4rem;
 }
