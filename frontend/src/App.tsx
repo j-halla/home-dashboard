@@ -45,6 +45,11 @@ export default function App() {
           </button>
         </li>
         <li className="nav-item" role="presentation">
+          <button className="nav-link" data-bs-toggle="tab" data-bs-target="#weather" type="button" role="tab">
+            Weather
+          </button>
+        </li>
+        <li className="nav-item" role="presentation">
           <button className="nav-link" data-bs-toggle="tab" data-bs-target="#calendar" type="button" role="tab">
             Calendar
           </button>
@@ -52,11 +57,6 @@ export default function App() {
         <li className="nav-item" role="presentation">
           <button className="nav-link" data-bs-toggle="tab" data-bs-target="#wifi" type="button" role="tab">
             WiFi
-          </button>
-        </li>
-        <li className="nav-item" role="presentation">
-          <button className="nav-link" data-bs-toggle="tab" data-bs-target="#weather" type="button" role="tab">
-            Weather
           </button>
         </li>
         <li className="nav-item ms-auto d-flex align-items-center">

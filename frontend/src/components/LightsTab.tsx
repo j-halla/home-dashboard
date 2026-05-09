@@ -9,6 +9,7 @@ interface Props {
 export default function LightsTab({ groups, lightState }: Props) {
   const [localGroups, setLocalGroups] = useState<LightGroups | null>(null)
   const pendingRef = useRef<Set<string>>(new Set())
+  const brightnessTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
 
   useEffect(() => {
     if (groups) {
@@ -35,7 +36,7 @@ export default function LightsTab({ groups, lightState }: Props) {
     pendingRef.current.add(groupId)
     setLocalGroups(prev => {
       if (!prev) return prev
-      return { ...prev, [groupId]: { ...prev[groupId], action: { on } } }
+      return { ...prev, [groupId]: { ...prev[groupId], action: { ...prev[groupId].action, on } } }
     })
     await fetch('/api/trigger-light', {
       method: 'POST',
@@ -43,6 +44,23 @@ export default function LightsTab({ groups, lightState }: Props) {
       body: JSON.stringify({ on, id: groupId }),
     })
     pendingRef.current.delete(groupId)
+  }
+
+  const handleBrightness = (groupId: string, brightness: number) => {
+    setLocalGroups(prev => {
+      if (!prev) return prev
+      return { ...prev, [groupId]: { ...prev[groupId], action: { ...prev[groupId].action, brightness, on: true } } }
+    })
+    clearTimeout(brightnessTimers.current[groupId])
+    brightnessTimers.current[groupId] = setTimeout(async () => {
+      pendingRef.current.add(groupId)
+      await fetch('/api/trigger-light', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ on: true, id: groupId, brightness }),
+      })
+      pendingRef.current.delete(groupId)
+    }, 150)
   }
 
   if (!localGroups) return <p className="text-muted">Loading...</p>
@@ -54,7 +72,7 @@ export default function LightsTab({ groups, lightState }: Props) {
           <div className="card h-100">
             <div className="card-body py-2">
               <p className="card-title text-center mb-2">{group.name}</p>
-              <div className="form-check form-switch d-flex justify-content-center">
+              <div className="form-check form-switch d-flex justify-content-center mb-2">
                 <input
                   className="form-check-input"
                   type="checkbox"
@@ -64,6 +82,14 @@ export default function LightsTab({ groups, lightState }: Props) {
                   onChange={e => handleToggle(id, e.target.checked)}
                 />
               </div>
+              <input
+                type="range"
+                className="form-range"
+                min={1}
+                max={100}
+                value={Math.round(group.action.brightness ?? 100)}
+                onChange={e => handleBrightness(id, parseInt(e.target.value))}
+              />
             </div>
           </div>
         </div>

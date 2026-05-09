@@ -18,6 +18,7 @@ export interface LightGroup {
   name: string;
   action: {
     on: boolean;
+    brightness: number;
   };
 }
 

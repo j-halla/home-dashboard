@@ -16,7 +16,7 @@ function weatherInfo(code: number, isDay = 1): { label: string; Icon: IconCompon
 }
 
 export default function WeatherTab({ data }: { data: WeatherData | null }) {
-  if (!data) return <p className="text-muted">Loading weather...</p>
+  if (!data) return <p className="text-muted">Loading...</p>
 
   const currentHour = new Date().getHours()
   const futureHourly = data.hourly.filter(h => {

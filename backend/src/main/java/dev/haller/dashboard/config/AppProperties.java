@@ -40,12 +40,12 @@ public class AppProperties {
     }
 
     public static class Lights {
-        private String user = "";
+        private String apiKey = "";
         private String bridgeAddressFallback = "";
-        private String discoveryApiUrl = "http://discovery.meethue.com/";
+        private String discoveryApiUrl = "https://discovery.meethue.com/";
 
-        public String getUser() { return user; }
-        public void setUser(String user) { this.user = user; }
+        public String getApiKey() { return apiKey; }
+        public void setApiKey(String apiKey) { this.apiKey = apiKey; }
         public String getBridgeAddressFallback() { return bridgeAddressFallback; }
         public void setBridgeAddressFallback(String bridgeAddressFallback) { this.bridgeAddressFallback = bridgeAddressFallback; }
         public String getDiscoveryApiUrl() { return discoveryApiUrl; }

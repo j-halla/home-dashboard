@@ -22,7 +22,7 @@ public class LightController {
 
     @PostMapping("/trigger-light")
     public Mono<ResponseEntity<JsonNode>> triggerLight(@RequestBody TriggerLightRequest request) {
-        return lightService.triggerLight(request.id(), request.on())
+        return lightService.triggerLight(request.id(), request.on(), request.brightness())
             .map(ResponseEntity::ok)
             .defaultIfEmpty(ResponseEntity.ok(null));
     }
