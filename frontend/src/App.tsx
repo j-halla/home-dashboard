@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSse } from './hooks/useSse'
 import StationboardTab from './components/StationboardTab'
 import LightsTab from './components/LightsTab'
@@ -7,6 +7,13 @@ import WifiTab from './components/WifiTab'
 import type { CalendarData, LightGroups, StationboardData, WifiData } from './types'
 
 export default function App() {
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark')
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-bs-theme', darkMode ? 'dark' : 'light')
+    localStorage.setItem('theme', darkMode ? 'dark' : 'light')
+  }, [darkMode])
+
   const [stationboard, setStationboard] = useState<StationboardData | null>(null)
   const [lightGroups, setLightGroups] = useState<LightGroups | null>(null)
   const [lightState, setLightState] = useState<LightGroups | null>(null)
@@ -42,6 +49,16 @@ export default function App() {
         <li className="nav-item" role="presentation">
           <button className="nav-link" data-bs-toggle="tab" data-bs-target="#wifi" type="button" role="tab">
             WiFi
+          </button>
+        </li>
+        <li className="nav-item ms-auto d-flex align-items-center">
+          <button
+            className="btn btn-sm d-flex align-items-center justify-content-center border-0"
+            style={{ width: '1.6rem', height: '1.6rem' }}
+            onClick={() => setDarkMode(d => !d)}
+            title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {darkMode ? '☀' : '☾'}
           </button>
         </li>
       </ul>
