@@ -4,7 +4,8 @@ import StationboardTab from './components/StationboardTab'
 import LightsTab from './components/LightsTab'
 import CalendarTab from './components/CalendarTab'
 import WifiTab from './components/WifiTab'
-import type { CalendarData, LightGroups, StationboardData, WifiData } from './types'
+import WeatherTab from './components/WeatherTab'
+import type { CalendarData, LightGroups, StationboardData, WifiData, WeatherData } from './types'
 
 export default function App() {
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark')
@@ -19,6 +20,7 @@ export default function App() {
   const [lightState, setLightState] = useState<LightGroups | null>(null)
   const [calendar, setCalendar] = useState<CalendarData | null>(null)
   const [wifi, setWifi] = useState<WifiData | null>(null)
+  const [weather, setWeather] = useState<WeatherData | null>(null)
 
   useSse('/sse', {
     stationboard: data => setStationboard(data as StationboardData),
@@ -26,6 +28,7 @@ export default function App() {
     light: data => setLightState(data as LightGroups),
     calendar: data => setCalendar(data as CalendarData),
     wifi: data => setWifi(data as WifiData),
+    weather: data => setWeather(data as WeatherData),
   })
 
   return (
@@ -51,6 +54,11 @@ export default function App() {
             WiFi
           </button>
         </li>
+        <li className="nav-item" role="presentation">
+          <button className="nav-link" data-bs-toggle="tab" data-bs-target="#weather" type="button" role="tab">
+            Weather
+          </button>
+        </li>
         <li className="nav-item ms-auto d-flex align-items-center">
           <button
             className="btn btn-sm d-flex align-items-center justify-content-center border-0"
@@ -74,6 +82,9 @@ export default function App() {
         </div>
         <div className="tab-pane fade" id="wifi" role="tabpanel">
           <WifiTab data={wifi} />
+        </div>
+        <div className="tab-pane fade" id="weather" role="tabpanel">
+          <WeatherTab data={weather} />
         </div>
       </div>
     </div>

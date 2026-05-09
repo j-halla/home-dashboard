@@ -9,6 +9,7 @@ public class AppProperties {
     private Lights lights = new Lights();
     private Calendar calendar = new Calendar();
     private Wifi wifi = new Wifi();
+    private Weather weather = new Weather();
 
     public Stationboard getStationboard() { return stationboard; }
     public void setStationboard(Stationboard stationboard) { this.stationboard = stationboard; }
@@ -21,6 +22,9 @@ public class AppProperties {
 
     public Wifi getWifi() { return wifi; }
     public void setWifi(Wifi wifi) { this.wifi = wifi; }
+
+    public Weather getWeather() { return weather; }
+    public void setWeather(Weather weather) { this.weather = weather; }
 
     public static class Stationboard {
         private String station = "Zurich HB";
@@ -63,5 +67,18 @@ public class AppProperties {
         public void setSsid(String ssid) { this.ssid = ssid; }
         public String getPassword() { return password; }
         public void setPassword(String password) { this.password = password; }
+    }
+
+    public static class Weather {
+        private String latitude = "47.37";
+        private String longitude = "8.54";
+        private String apiUrl = "https://api.open-meteo.com/v1/forecast";
+
+        public String getLatitude() { return latitude; }
+        public void setLatitude(String latitude) { this.latitude = latitude; }
+        public String getLongitude() { return longitude; }
+        public void setLongitude(String longitude) { this.longitude = longitude; }
+        public String getApiUrl() { return apiUrl; }
+        public void setApiUrl(String apiUrl) { this.apiUrl = apiUrl; }
     }
 }

@@ -3,6 +3,7 @@ package dev.haller.dashboard.controller;
 import dev.haller.dashboard.service.CalendarService;
 import dev.haller.dashboard.service.LightService;
 import dev.haller.dashboard.service.StationboardService;
+import dev.haller.dashboard.service.WeatherService;
 import dev.haller.dashboard.service.WifiService;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
@@ -17,13 +18,16 @@ public class SseController {
     private final LightService lightService;
     private final CalendarService calendarService;
     private final WifiService wifiService;
+    private final WeatherService weatherService;
 
     public SseController(StationboardService stationboardService, LightService lightService,
-                         CalendarService calendarService, WifiService wifiService) {
+                         CalendarService calendarService, WifiService wifiService,
+                         WeatherService weatherService) {
         this.stationboardService = stationboardService;
         this.lightService = lightService;
         this.calendarService = calendarService;
         this.wifiService = wifiService;
+        this.weatherService = weatherService;
     }
 
     @GetMapping(value = "/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -32,7 +36,8 @@ public class SseController {
             stationboardService.eventFlux(),
             lightService.eventFlux(),
             calendarService.eventFlux(),
-            wifiService.eventFlux()
+            wifiService.eventFlux(),
+            weatherService.eventFlux()
         );
     }
 }
