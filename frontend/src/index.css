@@ -1,9 +1,18 @@
 html {
   font-size: 1.75rem;
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-tabs .nav-link {
   padding: 0.2rem 0.75rem;
+}
+
+.nav-tabs {
+  background-color: var(--bs-body-bg);
 }
 
 .table > :not(caption) > * > * {
